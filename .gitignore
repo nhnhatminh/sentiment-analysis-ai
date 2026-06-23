@@ -18,3 +18,4 @@ data/processed/
 *.joblib
 
 tree.txt
+test_run.py
