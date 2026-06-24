@@ -19,3 +19,5 @@ data/processed/
 
 tree.txt
 test_run.py
+
+src/__pycache__/
