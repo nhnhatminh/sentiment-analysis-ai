@@ -30,7 +30,7 @@ class SingleReviewRequest(BaseModel):
 
 @app.get("/", response_class=HTMLResponse)
 async def serve_dashboard_interface():
-    template_file_path = os.path.join("templates", "index.html")
+    template_file_path = os.path.join("dashboard", "index.html")
     if not os.path.exists(template_file_path):
         return HTMLResponse(
             content="<h1>Dashboard Template Not Found</h1><p>Please build templates/index.html file.</p>", 

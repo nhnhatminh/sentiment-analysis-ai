@@ -1,0 +1,208 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ReviewClassifyAI - Executive Dashboard</title>
+    <link rel="stylesheet" href="/static/css/main.css" />
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  </head>
+  <body class="dashboard">
+    <aside class="sidebar">
+      <div class="sidebar__brand">
+        <h2>admin<span>HMD</span></h2>
+        <p>ReviewClassifyAI</p>
+      </div>
+      <nav class="sidebar__nav">
+        <button
+          class="sidebar__link sidebar__link--active"
+          data-target="tab-dashboard"
+        >
+          Dashboard
+        </button>
+        <button class="sidebar__link" data-target="tab-single">
+          Single Inference
+        </button>
+        <button class="sidebar__link" data-target="tab-batch">
+          Batch Ingestion
+        </button>
+      </nav>
+    </aside>
+
+    <main class="content">
+      <section id="tab-dashboard" class="content__view content__view--active">
+        <header class="content__header">
+          <div>
+            <h1>Executive Dashboard</h1>
+            <p>Monitor customer sentiment telemetry and system risk entities</p>
+          </div>
+        </header>
+
+        <div class="content__grid-cards">
+          <div class="analytics-card analytics-card--total">
+            <span class="analytics-card__title">TOTAL SCANNED</span>
+            <h2 id="metricTotal">0</h2>
+            <span class="analytics-card__sub">Records processed</span>
+          </div>
+          <div class="analytics-card analytics-card--positive">
+            <span class="analytics-card__title">POSITIVE VOICE</span>
+            <h2 id="metricPositive">0%</h2>
+            <span class="analytics-card__sub" id="countPositive"
+              >0 instances</span
+            >
+          </div>
+          <div class="analytics-card analytics-card--negative">
+            <span class="analytics-card__title">NEGATIVE VOICE</span>
+            <h2 id="metricNegative">0%</h2>
+            <span class="analytics-card__sub" id="countNegative"
+              >0 instances</span
+            >
+          </div>
+          <div class="analytics-card analytics-card--crisis">
+            <span class="analytics-card__title">CRISIS ALERTS</span>
+            <h2 id="metricCrisis">0</h2>
+            <span class="analytics-card__sub">Confidence &ge; 95%</span>
+          </div>
+        </div>
+
+        <div class="content__grid-charts">
+          <div class="chart-box">
+            <h3>Sentiment Breakdown</h3>
+            <div class="chart-box__wrapper">
+              <canvas id="telemetryChart"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <div class="content__table-section">
+          <div class="table-header">
+            <h3>Crisis Priority Queue (Top Severe Risk Entities)</h3>
+          </div>
+          <div class="table-wrapper">
+            <table class="crisis-table">
+              <thead>
+                <tr class="crisis-table__header">
+                  <th style="width: 80px">ID</th>
+                  <th style="width: 75%">Review Text Extract</th>
+                  <th style="width: 15%">MLP Confidence</th>
+                </tr>
+              </thead>
+              <tbody id="crisisTableBody">
+                <tr>
+                  <td
+                    colspan="3"
+                    style="text-align: center; color: #64748b; padding: 40px 0"
+                  >
+                    No data ingested yet. Please upload a CSV file in Batch
+                    Ingestion tab.
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <section id="tab-single" class="content__view">
+        <header class="content__header">
+          <div>
+            <h1>Single Inference Testing</h1>
+            <p>
+              Input custom review text manually to verify network prediction
+              parameters
+            </p>
+          </div>
+        </header>
+
+        <div class="inference-box">
+          <div class="inference-box__form">
+            <label class="form-label">Raw Review Text</label>
+            <textarea
+              id="singleInputText"
+              class="form-textarea"
+              placeholder="Type or paste a customer review here..."
+            ></textarea>
+            <button id="btnRunInference" class="btn btn--primary">
+              Analyze Sentiment
+            </button>
+          </div>
+
+          <div
+            id="singleResultContainer"
+            class="inference-box__result"
+            style="display: none"
+          >
+            <h3>Prediction Telemetry</h3>
+            <div class="result-grid">
+              <div class="result-item">
+                <span class="result-item__label">Cleaned Tokens</span>
+                <p id="resCleanedText" class="result-item__value"></p>
+              </div>
+              <div class="result-item">
+                <span class="result-item__label">Predicted Class</span>
+                <span id="resBadge" class="crisis-badge"></span>
+              </div>
+              <div class="result-item">
+                <span class="result-item__label">Mathematical Confidence</span>
+                <p id="resConfidence" class="result-item__value"></p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="tab-batch" class="content__view">
+        <header class="content__header">
+          <div>
+            <h1>Batch Ingestion Pipeline</h1>
+            <p>
+              Upload large scale datasets to trigger synchronous multi-layer
+              perceptron processing
+            </p>
+          </div>
+        </header>
+
+        <div class="upload-box">
+          <div class="upload-box__dropzone" id="dropzone">
+            <input
+              type="file"
+              id="batchFileInput"
+              accept=".csv"
+              class="upload-box__input"
+            />
+            <div class="upload-box__prompt">
+              <svg
+                width="48"
+                height="48"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+              >
+                <path
+                  d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"
+                />
+              </svg>
+              <p>
+                Drag and drop your Amazon review CSV file here, or
+                <span>browse local files</span>
+              </p>
+            </div>
+          </div>
+          <div
+            id="batchProgress"
+            class="upload-box__progress"
+            style="display: none"
+          >
+            <div class="spinner"></div>
+            <p>
+              Processing matrix calculations via MLP Network... Please wait.
+            </p>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <script src="/static/js/dashboard.js"></script>
+  </body>
+</html>
