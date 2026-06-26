@@ -6,6 +6,7 @@ from fastapi import FastAPI, UploadFile, File, HTTPException
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
+from fastapi import Response
 
 from src.text_cleaning import TextCleaner
 
@@ -123,3 +124,7 @@ async def predict_batch_csv_file(file: UploadFile = File(...)):
         },
         "crisis_queue": crisis_output_list
     }
+
+@app.get('/favicon.ico', include_in_schema=False)
+async def favicon():
+    return Response(status_code=204)
