@@ -34,7 +34,7 @@ class TextCleaner:
     MULTI_SPACE_PATTERN = re.compile(r"\s+")
 
     def __init__(self):
-        self.contraction_mapping = {
+        self.contractions = {
             "ain't": "is not", "aren't": "are not", "can't": "cannot", "'cause": "because",
             "couldn't": "could not", "didn't": "did not", "doesn't": "does not", "don't": "do not",
             "hadn't": "had not", "hasn't": "has not", "haven't": "have not", "he'd": "he would",
@@ -53,45 +53,34 @@ class TextCleaner:
             "won't": "will not", "wouldn't": "would not", "you'd": "you would", "you'll": "you will",
             "you're": "you are", "you've": "you have"
         }
-        
-        negation_words = {"no", "not", "nor", "neither", "never", "dont", "cant", "wont", "didnt", "doesnt", "cannot"}
-        
-        base_stop_words = ENGLISH_STOP_WORDS.union({"amazon", "prime", "st", "nd", "rd", "th"})
-        
-        self.stop_words = base_stop_words.difference(negation_words)
-        
-        self.contraction_pattern = re.compile(r'\b(' + '|'.join(self.contraction_mapping.keys()) + r')\b')
+        negations = {"no", "not", "nor", "neither", "never", "dont", "cant", "wont", "didnt", "doesnt", "cannot"}
+        base_stops = ENGLISH_STOP_WORDS.union({"amazon", "prime", "st", "nd", "rd", "th"})
+        self.stop_words = base_stops.difference(negations)
+        self.contraction_regex = re.compile(r'\b(' + '|'.join(self.contractions.keys()) + r')\b')
 
-    def expand_contractions(self, text: str) -> str:
-        def replace_match(match):
-            return self.contraction_mapping[match.group(0)]
-        return self.contraction_pattern.sub(replace_match, text)
+    def expand(self, text: str) -> str:
+        return self.contraction_regex.sub(lambda m: self.contractions[m.group(0)], text)
 
-    def clean_review_text(self, text: str) -> str:
+    def clean(self, text: str) -> str:
         if not isinstance(text, str):
             return ""
         
         text = text.lower().strip()
-        if text == "review text not found":
+        if text == "review text not found" or not text:
             return ""
             
         text = text.replace("’", "'")
-            
-        text = self.expand_contractions(text)
-        
+        text = self.expand(text)
         text = self.PUNCTUATION_SPACE_PATTERN.sub(r' \1 ', text)
-        
         text = self.URL_PATTERN.sub('', text)
-        
         text = self.ORDINAL_PATTERN.sub('', text)
         text = self.DIGIT_PATTERN.sub('', text)
-        
         text = text.encode('ascii', 'ignore').decode('ascii')
         
         punctuation_pattern = r'[{}]'.format(re.escape(string.punctuation))
         text = re.sub(punctuation_pattern, ' ', text)
         
-        words = text.split()
-        cleaned_tokens = [word for word in words if word not in self.stop_words and len(word) > 1]
+        tokens = text.split()
+        filtered_tokens = [w for w in tokens if w not in self.stop_words and len(w) > 1]
         
-        return self.MULTI_SPACE_PATTERN.sub(' ', " ".join(cleaned_tokens)).strip()
+        return self.MULTI_SPACE_PATTERN.sub(' ', " ".join(filtered_tokens)).strip()
