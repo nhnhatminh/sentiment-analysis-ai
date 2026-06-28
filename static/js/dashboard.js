@@ -52,6 +52,25 @@ document.addEventListener('DOMContentLoaded', () => {
                 resBadge.className = 'crisis-badge crisis-badge--critical';
             }
 
+            let aspectWrapper = document.getElementById('singleAspectWrapper');
+            if (!aspectWrapper) {
+                const resultGrid = document.querySelector('.result-grid');
+                const aspectItem = document.createElement('div');
+                aspectItem.className = 'result-item';
+                aspectItem.innerHTML = `<span class="result-item__label">Detected Aspect</span><div id="singleAspectWrapper" style="margin-top: 6px; display: flex; gap: 8px; flex-wrap: wrap;"></div>`;
+                resultGrid.appendChild(aspectItem);
+                aspectWrapper = document.getElementById('singleAspectWrapper');
+            }
+            
+            aspectWrapper.innerHTML = '';
+            data.aspect.forEach(asp => {
+                const badge = document.createElement('span');
+                const cssClassModifier = asp.toLowerCase().replace(' ', '-');
+                badge.className = `crisis-badge crisis-badge--${cssClassModifier}`;
+                badge.innerText = asp;
+                aspectWrapper.appendChild(badge);
+            });
+
             singleResultContainer.style.display = 'block';
         } catch (error) {
             alert(`Error: ${error.message}`);
@@ -150,7 +169,7 @@ document.addEventListener('DOMContentLoaded', () => {
         tbody.innerHTML = '';
 
         if (queue.length === 0) {
-            tbody.innerHTML = `<tr><td colspan="3" style="text-align: center; color: #64748b; padding: 40px 0;">No severe crisis detected in this batch.</td></tr>`;
+            tbody.innerHTML = `<tr><td colspan="4" style="text-align: center; color: #64748b; padding: 40px 0;">No severe crisis detected in this batch.</td></tr>`;
             return;
         }
 
@@ -164,14 +183,30 @@ document.addEventListener('DOMContentLoaded', () => {
             row.appendChild(idCell);
 
             const textCell = document.createElement('td');
-            textCell.innerText = item['Review Text'];
+            textCell.innerText = item.review_text;
             row.appendChild(textCell);
 
+            const aspectCell = document.createElement('td');
+            const aspectContainer = document.createElement('div');
+            aspectContainer.style.display = 'flex';
+            aspectContainer.style.gap = '6px';
+            aspectContainer.style.flexWrap = 'wrap';
+            
+            item.aspect.forEach(asp => {
+                const aspBadge = document.createElement('span');
+                const cssClassModifier = asp.toLowerCase().replace(' ', '-');
+                aspBadge.className = `crisis-badge crisis-badge--${cssClassModifier}`;
+                aspBadge.innerText = asp;
+                aspectContainer.appendChild(aspBadge);
+            });
+            aspectCell.appendChild(aspectContainer);
+            row.appendChild(aspectCell);
+
             const confCell = document.createElement('td');
-            const badge = document.createElement('span');
-            badge.className = 'crisis-badge crisis-badge--critical';
-            badge.innerText = `${(item['Confidence'] * 100).toFixed(4)}%`;
-            confCell.appendChild(badge);
+            const confBadge = document.createElement('span');
+            confBadge.className = 'crisis-badge crisis-badge--critical';
+            confBadge.innerText = `${(item.confidence * 100).toFixed(2)}%`;
+            confCell.appendChild(confBadge);
             row.appendChild(confCell);
 
             tbody.appendChild(row);
