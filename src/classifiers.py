@@ -1,12 +1,14 @@
 import os
 import pandas as pd
 import joblib
+import numpy as np
 from sklearn.model_selection import train_test_split
-from src.vectorizer import ReviewVectorizer
-from sklearn.neural_network import MLPClassifier
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.naive_bayes import MultinomialNB
+from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import classification_report, confusion_matrix
 
-class SentimentClassifier:
+class ExplainableSentimentPipeline:
     def __init__(self, data_path="data/processed/clean_data.csv"):
         self.data_path = data_path
         
@@ -18,13 +20,15 @@ class SentimentClassifier:
         self.x_train_vectorized = None
         self.x_test_vectorized = None
 
-        self.model = None
+        self.vectorizer = None
+        self.nb_model = None
+        self.lr_model = None
 
     def load_and_split_data(self, test_size=0.2, random_state=42):
         if not os.path.exists(self.data_path):
-            raise FileNotFoundError(f"[ERROR] Cleaned dataset file not found at: {self.data_path}")
+            raise FileNotFoundError(f"[ERROR] Dataset không tồn tại tại: {self.data_path}")
 
-        print(f"[INFO] Loading clean dataset from local directory: {self.data_path}")
+        print(f"[INFO] Đang nạp tập dữ liệu sạch từ đường dẫn: {self.data_path}")
         df = pd.read_csv(self.data_path)
         
         df.dropna(subset=['Review Text', 'Target Label'], inplace=True)
@@ -32,7 +36,7 @@ class SentimentClassifier:
         x_raw = df['Review Text'].values.astype('U')
         y_raw = df['Target Label'].values
 
-        print(f"[INFO] Splitting dataset into train (80%) and test (20%) partitions...")
+        print(f"[INFO] Đang thực hiện phân rã dữ liệu theo tỷ lệ Train 80% / Test 20%...")
         
         self.x_train_text, self.x_test_text, self.y_train, self.y_test = train_test_split(
             x_raw, y_raw,
@@ -40,10 +44,6 @@ class SentimentClassifier:
             random_state=random_state,
             stratify=y_raw
         )
-
-        print(f"[SUCCESS] Data split completed successfully.")
-        print(f"[SUCCESS] Training samples count: {len(self.x_train_text)}")
-        print(f"[SUCCESS] Testing samples count: {len(self.x_test_text)}")
         
         return self.x_train_text, self.x_test_text, self.y_train, self.y_test
 
@@ -51,63 +51,96 @@ class SentimentClassifier:
         if self.x_train_text is None:
             self.load_and_split_data()
 
-        print("[INFO] Kicking off isolated feature extraction pipeline...")
-        vectorizer_manager = ReviewVectorizer(max_features=max_features)
+        print(f"[INFO] Đang khởi tạo bộ chuyển đổi TF-IDF với {max_features} đặc trưng...")
+        self.vectorizer = TfidfVectorizer(max_features=max_features, ngram_range=(1, 2))
         
-        self.x_train_vectorized = vectorizer_manager.fit_transform_data(self.x_train_text)
-        self.x_test_vectorized = vectorizer_manager.transform_data(self.x_test_text)
+        self.x_train_vectorized = self.vectorizer.fit_transform(self.x_train_text)
+        self.x_test_vectorized = self.vectorizer.transform(self.x_test_text)
         
-        vectorizer_manager.save_vectorizer_model()
-        print("[SUCCESS] Feature matrices are fully prepared for modeling phase.")
-        
+        print("[SUCCESS] Quá trình trích xuất ma trận đặc trưng hoàn tất.")
         return self.x_train_vectorized, self.x_test_vectorized
-    
-    def train_multi_layer_perceptron(self, max_iter=20):
+
+    def train_naive_bayes(self):
         if self.x_train_vectorized is None:
             self.prepare_features()
 
-        print("[INFO] Initializing Multi-Layer Perceptron network architecture...")
-        
-        self.model = MLPClassifier(
-            hidden_layer_sizes=(64, 32),  
-            activation='relu',            
-            solver='adam',                
-            batch_size=128,               
-            max_iter=max_iter,            
-            early_stopping=True,          
-            validation_fraction=0.1,      
-            n_iter_no_change=5,           
-            verbose=True,                 
-            random_state=42
-        )
-        
-        print(f"[INFO] Fitting Deep Neural Network weights with Early Stopping protection...")
-        self.model.fit(self.x_train_vectorized, self.y_train)
-        print("[SUCCESS] Multi-Layer Perceptron training pipeline completed.")
-        return self.model
+        print("[INFO] Đang cấu hình và khớp trọng số cho mô hình Naive Bayes...")
+        self.nb_model = MultinomialNB(alpha=1.0)
+        self.nb_model.fit(self.x_train_vectorized, self.y_train)
+        print("[SUCCESS] Huấn luyện Naive Bayes hoàn tất.")
+        return self.nb_model
 
-    def evaluate_model(self):
-        if self.model is None:
-            raise ValueError("[ERROR] Neural Network has not been trained yet.")
+    def train_logistic_regression(self):
+        if self.x_train_vectorized is None:
+            self.prepare_features()
 
-        print("[INFO] Generating network predictions on 3,920 test instances...")
-        y_pred = self.model.predict(self.x_test_vectorized)
-        
+        print("[INFO] Đang tối ưu hóa hàm chi phí cho mô hình Logistic Regression...")
+        self.lr_model = LogisticRegression(max_iter=1000, solver='lbfgs', random_state=42)
+        self.lr_model.fit(self.x_train_vectorized, self.y_train)
+        print("[SUCCESS] Huấn luyện Logistic Regression hoàn tất.")
+        return self.lr_model
+
+    def evaluate_model(self, model_type="nb"):
+        if model_type == "nb":
+            current_model = self.nb_model
+            name = "MULTINOMIAL NAIVE BAYES"
+        else:
+            current_model = self.lr_model
+            name = "LOGISTIC REGRESSION"
+
+        if current_model is None:
+            raise ValueError(f"[ERROR] Mô hình {model_type} chưa được huấn luyện.")
+
+        y_pred = current_model.predict(self.x_test_vectorized)
         conf_mat = confusion_matrix(self.y_test, y_pred)
         class_report = classification_report(self.y_test, y_pred, target_names=['Negative (0)', 'Positive (1)'])
-        
-        print("\n" + "="*20 + " MULTI-LAYER PERPCEPTRON REPORT " + "="*20)
+
+        print("\n" + "="*20 + f" {name} REPORT " + "="*20)
         print("\n--- Confusion Matrix ---")
         print(conf_mat)
-        print("\n--- Detailed Neural Network Classification Metrics ---")
+        print("\n--- Detailed Classification Metrics ---")
         print(class_report)
-        print("="*66 + "\n")
-        
+        print("="*60 + "\n")
         return conf_mat, class_report
 
-    def save_classifier_model(self, file_path="models/neural_network_model.joblib"):
-        if self.model is None:
-            raise ValueError("[ERROR] No trained neural network found to export.")
-        os.makedirs(os.path.dirname(file_path), exist_ok=True)
-        joblib.dump(self.model, file_path)
-        print(f"[EXPORT] Trained MLP Neural Network successfully saved to: {file_path}")
+    def explain_model_features(self, n_top=10):
+        if self.vectorizer is None:
+            raise ValueError("[ERROR] Bộ vectorizer chưa được khởi tạo.")
+            
+        feature_names = np.array(self.vectorizer.get_feature_names_out())
+
+        if self.nb_model is not None:
+            print("\n" + "-"*15 + " NAIVE BAYES INTERPRETABILITY " + "-"*15)
+            neg_log_prob = self.nb_model.feature_log_prob_[0].argsort()[::-1]
+            pos_log_prob = self.nb_model.feature_log_prob_[1].argsort()[::-1]
+            
+            print(f"[NB] Top {n_top} từ khóa dẫn dắt lớp Tiêu cực (Nguy cơ khủng hoảng):")
+            for idx in neg_log_prob[:n_top]:
+                print(f"  -> {feature_names[idx]}")
+                
+            print(f"[NB] Top {n_top} từ khóa dẫn dắt lớp Tích cực:")
+            for idx in pos_log_prob[:n_top]:
+                print(f"  -> {feature_names[idx]}")
+
+        if self.lr_model is not None:
+            print("\n" + "-"*15 + " LOGISTIC REGRESSION INTERPRETABILITY " + "-"*15)
+            coefficients = self.lr_model.coef_[0]
+            sorted_coeff_indices = coefficients.argsort()
+
+            print(f"[LR] Top {n_top} từ khóa có trọng số Tiêu cực mạnh nhất:")
+            for idx in sorted_coeff_indices[:n_top]:
+                print(f"  -> {feature_names[idx]} (Weight: {coefficients[idx]:.4f})")
+
+            print(f"[LR] Top {n_top} từ khóa có trọng số Tích cực mạnh nhất:")
+            for idx in sorted_coeff_indices[::-1][:n_top]:
+                print(f"  -> {feature_names[idx]} (Weight: {coefficients[idx]:.4f})")
+
+    def save_explainable_artifacts(self):
+        os.makedirs("models", exist_ok=True)
+        if self.vectorizer:
+            joblib.dump(self.vectorizer, "models/tfidf_vectorizer.joblib")
+        if self.nb_model:
+            joblib.dump(self.nb_model, "models/naive_bayes_model.joblib")
+        if self.lr_model:
+            joblib.dump(self.lr_model, "models/neural_network_model.joblib") 
+        print("[EXPORT] Toàn bộ Artifacts giải thích được đã xuất kho thành công.")
