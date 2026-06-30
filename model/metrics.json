@@ -1,0 +1,17 @@
+{
+    "accuracy": 1.0,
+    "precision": 1.0,
+    "recall": 1.0,
+    "f1": 1.0,
+    "prediction_speed": 0.006,
+    "confusion_matrix": [
+        [
+            150,
+            0
+        ],
+        [
+            0,
+            150
+        ]
+    ]
+}
