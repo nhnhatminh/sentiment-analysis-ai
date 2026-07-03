@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 import plotly.graph_objects as go
 import streamlit as st
 import joblib
-from src.data_cleaner import DataCleaner
+from src.data_cleaner import TextCleaner
 
 warnings.filterwarnings("ignore")
 matplotlib.use("Agg")
@@ -300,7 +300,6 @@ def load_model(mp: pathlib.Path, vp: pathlib.Path):
     if not mp.exists() or not vp.exists(): 
         return None, None
     try:
-        # Thay thế hoàn toàn pickle bằng joblib để tương thích cấu trúc file .joblib
         model      = joblib.load(mp)
         vectorizer = joblib.load(vp)
         return model, vectorizer
@@ -322,9 +321,14 @@ def predict_single(text: str, model, vectorizer) -> tuple:
     if model and vectorizer:
         t0 = time.perf_counter()
         
-        cleaner = DataCleaner()
-        cleaned_text = cleaner.clean_text(text)
-        
+        cleaner = TextCleaner()
+        if hasattr(cleaner, 'clean_text'):
+            cleaned_text = cleaner.clean_text(text)
+        elif hasattr(cleaner, 'clean'):
+            cleaned_text = cleaner.clean(text)
+        else:
+            cleaned_text = text.lower()
+            
         vec = vectorizer.transform([cleaned_text])
         proba = model.predict_proba(vec)[0]
         pred  = model.predict(vec)[0]
@@ -443,14 +447,33 @@ def chart_trend(history: list):
 
 def chart_confusion(cm):
     z   = np.array(cm)
-    txt = [[f"{z[i,j]:,}" for j in range(2)] for i in range(2)]
+    x_labels = ["Dự đoán Tiêu cực", "Dự đoán Tích cực"]
+    y_labels = ["Thực tế Tiêu cực",  "Thực tế Tích cực"]
+    
     fig = go.Figure(go.Heatmap(
-        z=z, x=["Dự đoán Tiêu cực", "Dự đoán Tích cực"], y=["Thực tế Tiêu cực",  "Thực tế Tích cực"],
-        text=txt, texttemplate="%{text}", textfont=dict(size=18, family="Inter", color="white"),
+        z=z, x=x_labels, y=y_labels,
         colorscale=[[0,"#EFF6FF"],[0.5,"#2563EB"],[1,"#1E40AF"]], showscale=False,
         hovertemplate="Thực tế: %{y}<br>Dự đoán: %{x}<br>Số: %{z}<extra></extra>",
     ))
+    
+    max_val = z.max()
+    annotations = []
+    for i in range(2):
+        for j in range(2):
+            val = z[i, j]
+
+            color = "white" if val > max_val * 0.2 else "#1E293B"
+            annotations.append(dict(
+                x=x_labels[j], y=y_labels[i],
+                text=f"{val:,}",
+                font=dict(family="Inter", size=18, color=color, weight="bold"),
+                showarrow=False,
+                xref="x1", yref="y1"
+            ))
+            
     fig.update_layout(**_base_layout(320))
+    fig.update_layout(annotations=annotations)
+    
     fig.update_xaxes(side="bottom", showgrid=False, tickfont=dict(size=12, family="Inter", color=T()["muted"]))
     fig.update_yaxes(autorange="reversed", showgrid=False, tickfont=dict(size=12, family="Inter", color=T()["muted"]))
     return fig
@@ -595,9 +618,12 @@ def render_header():
         <div class="hdr-sub">Bảng điều khiển phân loại cảm xúc đánh giá sản phẩm thương mại điện tử</div>
     </div>""", unsafe_allow_html=True)
 
-def render_overview(raw_df, model, vectorizer, metrics):
+def render_overview(raw_df, clean_df, model, vectorizer, metrics):
     st.markdown('<div class="sh">Tổng quan hệ thống</div>', unsafe_allow_html=True)
-    ds = f"{len(raw_df):,} dòng"       if raw_df      is not None else "Không tìm thấy"
+    
+    active_df = raw_df if raw_df is not None else clean_df
+    ds = f"{len(active_df):,} dòng" if active_df is not None else "Không tìm thấy"
+    
     mn = type(model).__name__          if model       is not None else "Chưa tải"
     vn = type(vectorizer).__name__     if vectorizer  is not None else "Chưa tải"
     ps = f"~{metrics.get('prediction_speed','N/A')}s"   if metrics else "N/A"
@@ -867,7 +893,8 @@ def main():
     render_header()
 
     page = st.session_state.active_page
-    if   page == "Tổng quan":           render_overview(raw_df, model, vectorizer, metrics)
+    if   page == "Tổng quan":           
+      render_overview(raw_df, clean_df, model, vectorizer, metrics)
     elif page == "Phân tích đơn lẻ":
         render_single_analysis(model, vectorizer)
         st.markdown('<div class="dv"></div>', unsafe_allow_html=True)
