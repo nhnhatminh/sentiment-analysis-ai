@@ -50,6 +50,16 @@ class DataPipeline:
         working_df = working_df[working_df['Cleaned Review'].str.strip() != ""]
         working_df.dropna(subset=['Cleaned Review'], inplace=True)
         
+        df_positive = working_df[working_df['Target Label'] == 1]
+        df_negative = working_df[working_df['Target Label'] == 0]
+        
+        min_size = min(len(df_positive), len(df_negative))
+        
+        df_pos_sampled = df_positive.sample(n=min_size, random_state=42)
+        df_neg_sampled = df_negative.sample(n=min_size, random_state=42)
+        
+        working_df = pd.concat([df_pos_sampled, df_neg_sampled]).sample(frac=1, random_state=42).reset_index(drop=True)
+        
         self.processed_df = working_df[['Review Text', 'Cleaned Review', 'Target Label']].reset_index(drop=True)
         return self.processed_df
 

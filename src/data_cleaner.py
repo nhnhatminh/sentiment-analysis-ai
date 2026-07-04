@@ -20,10 +20,10 @@ than that that's the their theirs them themselves then there there's
 these they they'd they'll they're they've this those through to too
 under until up
 very
-was wasn't we we'd we'll we're we've were weren't what what's when
+was wasn't we we'd we'll we're we_ve were weren't what what's when
 when's where where's which while who who's whom why why's with won't
 would wouldn't
-you you'd you'll you're you've your yours yourself yourselves
+you you'd you'll you're you_ve your yours yourself yourselves
 """.split())
 
 class TextCleaner:
@@ -79,8 +79,24 @@ class TextCleaner:
         
         punctuation_pattern = r'[{}]'.format(re.escape(string.punctuation))
         text = re.sub(punctuation_pattern, ' ', text)
-        
+ 
         tokens = text.split()
-        filtered_tokens = [w for w in tokens if w not in self.stop_words and len(w) > 1]
+        transformed_tokens = []
+        negation_countdown = 0
+        negation_anchors = {"no", "not", "nor", "neither", "never", "cannot", "lacks", "failed"}
         
-        return self.MULTI_SPACE_PATTERN.sub(' ', " ".join(filtered_tokens)).strip()
+        for word in tokens:
+            if word in negation_anchors:
+                negation_countdown = 3
+                if word not in self.stop_words and len(word) > 1:
+                    transformed_tokens.append(word)
+                continue
+            
+            if negation_countdown > 0:
+                word = f"not_{word}"
+                negation_countdown -= 1
+                
+            if word not in self.stop_words and len(word) > 1:
+                transformed_tokens.append(word)
+        
+        return self.MULTI_SPACE_PATTERN.sub(' ', " ".join(transformed_tokens)).strip()
