@@ -87,7 +87,7 @@ class TextCleaner:
         
         for word in tokens:
             if word in negation_anchors:
-                negation_countdown = 3
+                negation_countdown = 2
                 if word not in self.stop_words and len(word) > 1:
                     transformed_tokens.append(word)
                 continue

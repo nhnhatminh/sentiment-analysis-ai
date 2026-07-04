@@ -67,7 +67,7 @@ class ReviewClassifier:
             hidden_layer_sizes=(128, 64),
             activation='relu',
             solver='adam',
-            alpha=0.2,                    
+            alpha=0.05,                   
             early_stopping=True,          
             validation_fraction=0.1,       
             n_iter_no_change=8,           
