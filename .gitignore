@@ -7,17 +7,18 @@ __pycache__/
 env/
 ENV/
 
-data/raw/
-data/processed/
-
+.vs/
 .vscode/
 .idea/
 .DS_Store
 
-*.pkl
+.streamlit/secrets.toml
+
+data/raw/
+data/processed/
+
 *.joblib
+*.pkl
+*.zip
 
 tree.txt
-test_run.py
-
-src/__pycache__/
