@@ -21,4 +21,7 @@ data/processed/
 *.pkl
 *.zip
 
+!models/neural_network_model.joblib
+!models/tfidf_vectorizer.joblib
+
 tree.txt
