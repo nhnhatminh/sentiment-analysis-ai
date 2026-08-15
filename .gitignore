@@ -16,6 +16,7 @@ ENV/
 
 data/raw/
 data/processed/
+!data/processed/clean_data.csv
 
 *.joblib
 *.pkl

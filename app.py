@@ -14,149 +14,242 @@ if str(ROOT) not in sys.path:
 
 from src.ui_styles import inject_css
 from src.ui_pages import (
-    render_sidebar, render_header, render_overview, 
-    render_single_analysis, render_history, render_batch, 
-    render_visualization, render_performance, render_data_info
+    render_sidebar,
+    render_header,
+    render_overview,
+    render_single_analysis,
+    render_history,
+    render_batch,
+    render_visualization,
+    render_performance,
+    render_data_info,
 )
 
-DATA_RAW        = ROOT / "data"  / "raw" / "Amazon_Reviews.csv"
-DATA_CLEAN      = ROOT / "data"  / "processed" / "clean_data.csv"
-MODEL_PATH      = ROOT / "models" / "neural_network_model.joblib"
+DATA_RAW = ROOT / "data" / "raw" / "Amazon_Reviews.csv"
+DATA_CLEAN = ROOT / "data" / "processed" / "clean_data.csv"
+MODEL_PATH = ROOT / "models" / "neural_network_model.joblib"
 VECTORIZER_PATH = ROOT / "models" / "tfidf_vectorizer.joblib"
-METRICS_PATH    = ROOT / "models" / "metrics.json"
+METRICS_PATH = ROOT / "models" / "metrics.json"
 
 GLOBAL_CLEANER = TextCleaner()
 
-st.set_page_config(page_title="ReviewClassifyAI", layout="wide", initial_sidebar_state="expanded")
+st.set_page_config(
+    page_title="ReviewClassifyAI",
+    layout="wide",
+    initial_sidebar_state="expanded",
+)
 
-defaults = {"dark_mode": True, "history": [], "active_page": "Tổng quan", "batch_results": None}
+defaults = {
+    "dark_mode": True,
+    "history": [],
+    "active_page": "Tổng quan",
+    "batch_results": None,
+}
+
 for k, v in defaults.items():
-    if k not in st.session_state: 
+    if k not in st.session_state:
         st.session_state[k] = v
+
 
 @st.cache_data(show_spinner=False)
 def load_dataset(path):
-    if not path.exists(): 
+    if not path.exists():
         return None
+
     try:
-        return pd.read_csv(path, on_bad_lines='skip')
+        return pd.read_csv(path, on_bad_lines="skip")
     except Exception:
         try:
-            return pd.read_csv(path, engine='python', on_bad_lines='skip')
+            return pd.read_csv(path, engine="python", on_bad_lines="skip")
         except Exception:
             return None
 
+
 @st.cache_data(show_spinner=False)
 def load_metrics(path):
-    if not path.exists(): 
+    if not path.exists():
         return None
-    with open(path, "r", encoding="utf-8") as f: 
+
+    with open(path, "r", encoding="utf-8") as f:
         return json.load(f)
 
+
 @st.cache_resource(show_spinner=False)
-def load_production_agents(mp, vp):
-    return (joblib.load(mp), joblib.load(vp)) if (mp.exists() and vp.exists()) else (None, None)
+def load_production_models(mp, vp):
+    mlp_model = joblib.load(mp) if mp.exists() else None
+    vectorizer = joblib.load(vp) if vp.exists() else None
+
+    lr_path = mp.parent / "logistic_regression_model.joblib"
+    lr_model = joblib.load(lr_path) if lr_path.exists() else None
+
+    return mlp_model, vectorizer, lr_model
 
 
 def predict_single(text, model, vectorizer, lr_model=None):
     if not model or not vectorizer:
         return "Negative", 0.0, 0.0, []
+
     if not isinstance(text, str) or not text.strip():
         return "Negative", 0.0, 0.0, []
-        
+
     cleaner = TextCleaner()
-    cleaned_text = cleaner.clean(text) if hasattr(cleaner, 'clean') else text.lower().strip()
-    
+    cleaned_text = (
+        cleaner.clean(text)
+        if hasattr(cleaner, "clean")
+        else text.lower().strip()
+    )
+
     start_time = time.perf_counter()
     vectorized_text = vectorizer.transform([cleaned_text])
-    
+
     prediction = model.predict(vectorized_text)[0]
     probabilities = model.predict_proba(vectorized_text)[0]
     confidence = float(max(probabilities))
     label = "Positive" if str(prediction) == "1" else "Negative"
     latency = time.perf_counter() - start_time
-    
+
     word_contributions = []
+
     if lr_model is not None:
         feature_names = vectorizer.get_feature_names_out()
         words_in_text = cleaned_text.split()
-        
+
         for word in set(words_in_text):
             if word in feature_names:
                 idx = list(feature_names).index(word)
                 weight = float(lr_model.coef_[0][idx])
+
                 if abs(weight) > 0.1:
-                    word_contributions.append({"word": word, "weight": weight})
-                    
-        word_contributions = sorted(word_contributions, key=lambda x: abs(x["weight"]), reverse=True)
-        
+                    word_contributions.append({
+                        "word": word,
+                        "weight": weight,
+                    })
+
+        word_contributions = sorted(
+            word_contributions,
+            key=lambda x: abs(x["weight"]),
+            reverse=True,
+        )
+
     return label, confidence, latency, word_contributions
 
 
 def predict_batch(texts, model, vectorizer):
     if not model or not vectorizer:
         return [("Negative", 0.0, 0.0)] * len(texts)
-        
+
     cleaned_texts = [
-        GLOBAL_CLEANER.clean(text) if isinstance(text, str) and text.strip() else ""
+        GLOBAL_CLEANER.clean(text)
+        if isinstance(text, str) and text.strip()
+        else ""
         for text in texts
     ]
-            
+
     start_time = time.perf_counter()
     vectorized_matrices = vectorizer.transform(cleaned_texts)
-    
+
     probabilities = model.predict_proba(vectorized_matrices)
-    
+
     total_latency = time.perf_counter() - start_time
-    average_latency = round(total_latency / max(1, len(texts)), 4)
-    
+    average_latency = round(
+        total_latency / max(1, len(texts)),
+        4,
+    )
+
     OPTIMAL_THRESHOLD = 0.75
     results = []
-    
+
     for proba in probabilities:
         pos_prob = float(proba[1])
         neg_prob = float(proba[0])
-        
+
         if pos_prob >= OPTIMAL_THRESHOLD:
             label = "Positive"
             confidence = pos_prob
         else:
             label = "Negative"
             confidence = neg_prob if neg_prob > pos_prob else pos_prob
-            
+
         results.append((label, confidence, average_latency))
-        
+
     return results
 
 
 def main():
     inject_css()
+
     raw_df = load_dataset(DATA_RAW)
     clean_df = load_dataset(DATA_CLEAN)
     metrics = load_metrics(METRICS_PATH)
-    
-    mlp_model = joblib.load(MODEL_PATH) if MODEL_PATH.exists() else None
-    vectorizer = joblib.load(VECTORIZER_PATH) if VECTORIZER_PATH.exists() else None
-    
-    lr_path = MODEL_PATH.parent / "logistic_regression_model.joblib"
-    lr_model = joblib.load(lr_path) if lr_path.exists() else None
+
+    mlp_model, vectorizer, lr_model = load_production_models(
+        MODEL_PATH,
+        VECTORIZER_PATH,
+    )
 
     render_sidebar()
     render_header()
 
     page = st.session_state.active_page
-    if   page == "Tổng quan":           render_overview(raw_df, clean_df, mlp_model, vectorizer, metrics)
-    elif page == "Phân tích đơn lẻ":
-        render_single_analysis(mlp_model, vectorizer, lambda t, m, v: predict_single(t, m, v, lr_model))
-        st.markdown('<div class="dv"></div>', unsafe_allow_html=True)
-        st.markdown('<div class="sh">Lịch sử dự đoán thực tế</div>', unsafe_allow_html=True)
-        render_history()
-    elif page == "Phân tích hàng loạt": render_batch(mlp_model, vectorizer, predict_batch)
-    elif page == "Trực quan dữ liệu":   render_visualization(raw_df, clean_df)
-    elif page == "Hiệu suất mô hình":   render_performance(metrics)
-    elif page == "Thông tin dữ liệu":   render_data_info(raw_df, clean_df)
 
-    st.markdown('<div class="ft">Project &nbsp;·&nbsp; <strong>ReviewClassifyAI</strong></div>', unsafe_allow_html=True)
+    if page == "Tổng quan":
+        render_overview(
+            raw_df,
+            clean_df,
+            mlp_model,
+            vectorizer,
+            metrics,
+        )
+
+    elif page == "Phân tích đơn lẻ":
+        render_single_analysis(
+            mlp_model,
+            vectorizer,
+            lambda t, m, v: predict_single(
+                t,
+                m,
+                v,
+                lr_model,
+            ),
+        )
+        st.markdown(
+            '<div class="dv"></div>',
+            unsafe_allow_html=True,
+        )
+        st.markdown(
+            '<div class="sh">Lịch sử dự đoán thực tế</div>',
+            unsafe_allow_html=True,
+        )
+        render_history()
+
+    elif page == "Phân tích hàng loạt":
+        render_batch(
+            mlp_model,
+            vectorizer,
+            predict_batch,
+        )
+
+    elif page == "Trực quan dữ liệu":
+        render_visualization(
+            raw_df,
+            clean_df,
+        )
+
+    elif page == "Hiệu suất mô hình":
+        render_performance(metrics)
+
+    elif page == "Thông tin dữ liệu":
+        render_data_info(
+            raw_df,
+            clean_df,
+        )
+
+    st.markdown(
+        '<div class="ft">Project &nbsp;·&nbsp; '
+        '<strong>ReviewClassifyAI</strong></div>',
+        unsafe_allow_html=True,
+    )
+
 
 if __name__ == "__main__":
     main()
