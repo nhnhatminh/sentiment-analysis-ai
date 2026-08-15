@@ -14,8 +14,9 @@ ENV/
 
 .streamlit/secrets.toml
 
-data/raw/
-data/processed/
+data/raw/*
+data/processed/*
+!data/raw/mini_raw_sample.csv
 !data/processed/clean_data.csv
 
 *.joblib
