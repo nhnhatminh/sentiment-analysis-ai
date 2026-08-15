@@ -9,12 +9,16 @@ from src.ui_charts import (
 )
 
 def detect_text_col(df):
+    if df is None or not isinstance(df, pd.DataFrame) or df.empty:
+        return None
     for col in df.columns:
         if df[col].dtype == object and df[col].dropna().str.len().mean() > 12: 
             return col
     return None
 
 def detect_label_col(df):
+    if df is None or not isinstance(df, pd.DataFrame) or df.empty:
+        return None
     priority = ("label", "sentiment", "target", "target label", "class")
     for col in df.columns:
         if col.lower() in priority and df[col].nunique() <= 5: 
@@ -176,17 +180,34 @@ def render_batch(model, vectorizer, batch_func):
 def render_visualization(raw_df, clean_df):
     st.markdown('<div class="sh">Trực quan hóa dữ liệu</div>', unsafe_allow_html=True)
     df = clean_df if clean_df is not None else raw_df
+    
+    # Bẫy kiểm tra an toàn: Nếu không có dữ liệu thì hiển thị thông báo thay vì vẽ biểu đồ gây crash
+    if df is None or df.empty:
+        st.markdown('<div class="wb">Chưa có tập dữ liệu mẫu để trực quan hóa. Vui lòng kiểm tra lại file dữ liệu trong thư mục data/processed/ hoặc tải file mẫu lên.</div>', unsafe_allow_html=True)
+        return
+
+    label_col = detect_label_col(df)
+    text_col = detect_text_col(df)
+
     t1, t2, t3 = st.tabs(["Cân bằng dữ liệu", "Tần suất phân bổ từ", "Mật độ đám mây từ"])
     with t1: 
-        st.pyplot(chart_distribution(df, detect_label_col(df)), clear_figure=True)
+        fig = chart_distribution(df, label_col)
+        if fig:
+            st.pyplot(fig, clear_figure=True)
+        else:
+            st.markdown('<div class="ib">Không tìm thấy cột nhãn nhị phân phù hợp trong dữ liệu.</div>', unsafe_allow_html=True)
     with t2: 
-        st.pyplot(chart_word_freq(df, detect_text_col(df)), clear_figure=True)
+        fig = chart_word_freq(df, text_col)
+        if fig:
+            st.pyplot(fig, clear_figure=True)
+        else:
+            st.markdown('<div class="ib">Không tìm thấy cột văn bản phù hợp để trích xuất từ vựng.</div>', unsafe_allow_html=True)
     with t3: 
-        wc = chart_wordcloud(df, detect_text_col(df))
+        wc = chart_wordcloud(df, text_col)
         if wc: 
             st.pyplot(wc, clear_figure=True)
         else:
-            st.markdown('<div class="ib">Hệ thống Đám mây từ (Word Cloud) hiện chưa có dữ liệu hoặc thiếu thư viện liên kết. Vui lòng kiểm tra lại cột văn bản.</div>', unsafe_allow_html=True)
+            st.markdown('<div class="ib">Không thể tạo đám mây từ. Vui lòng kiểm tra lại cột văn bản.</div>', unsafe_allow_html=True)
 
 def render_performance(metrics):
     st.markdown('<div class="sh">Hiệu suất mô hình</div>', unsafe_allow_html=True)
