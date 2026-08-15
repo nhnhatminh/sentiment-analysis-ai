@@ -8,6 +8,7 @@ import streamlit as st
 import joblib
 from src.data_cleaner import TextCleaner
 
+# Thêm đường dẫn gốc hệ thống
 ROOT = pathlib.Path(os.getcwd())
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
@@ -25,6 +26,7 @@ from src.ui_pages import (
     render_data_info,
 )
 
+# Khai báo đường dẫn tài nguyên
 DATA_RAW = ROOT / "data" / "raw" / "Amazon_Reviews.csv"
 DATA_CLEAN = ROOT / "data" / "processed" / "clean_data.csv"
 MODEL_PATH = ROOT / "models" / "neural_network_model.joblib"
@@ -33,12 +35,14 @@ METRICS_PATH = ROOT / "models" / "metrics.json"
 
 GLOBAL_CLEANER = TextCleaner()
 
+# Cấu hình trang Streamlit
 st.set_page_config(
     page_title="ReviewClassifyAI",
     layout="wide",
     initial_sidebar_state="expanded",
 )
 
+# Khởi tạo session state mặc định
 defaults = {
     "dark_mode": True,
     "history": [],
@@ -53,6 +57,7 @@ for k, v in defaults.items():
 
 @st.cache_data(show_spinner=False)
 def load_dataset(path):
+    # Nạp tập dữ liệu có cache
     if not path.exists():
         return None
 
@@ -67,6 +72,7 @@ def load_dataset(path):
 
 @st.cache_data(show_spinner=False)
 def load_metrics(path):
+    # Nạp tệp chỉ số hiệu năng
     if not path.exists():
         return None
 
@@ -76,6 +82,7 @@ def load_metrics(path):
 
 @st.cache_resource(show_spinner=False)
 def load_production_models(mp, vp):
+    # Nạp mô hình vào RAM
     mlp_model = joblib.load(mp) if mp.exists() else None
     vectorizer = joblib.load(vp) if vp.exists() else None
 
@@ -86,6 +93,7 @@ def load_production_models(mp, vp):
 
 
 def predict_single(text, model, vectorizer, lr_model=None):
+    # Dự đoán cho một câu văn
     if not model or not vectorizer:
         return "Negative", 0.0, 0.0, []
 
@@ -135,6 +143,7 @@ def predict_single(text, model, vectorizer, lr_model=None):
 
 
 def predict_batch(texts, model, vectorizer):
+    # Dự đoán theo lô hàng loạt
     if not model or not vectorizer:
         return [("Negative", 0.0, 0.0)] * len(texts)
 
@@ -176,6 +185,7 @@ def predict_batch(texts, model, vectorizer):
 
 
 def main():
+    # Hàm khởi chạy ứng dụng
     inject_css()
 
     raw_df = load_dataset(DATA_RAW)
@@ -201,7 +211,7 @@ def main():
             metrics,
         )
 
-    elif page == "Phân tích đơn lẻ":
+    elif page == "Phân tích Trực tiếp":
         render_single_analysis(
             mlp_model,
             vectorizer,
@@ -217,36 +227,36 @@ def main():
             unsafe_allow_html=True,
         )
         st.markdown(
-            '<div class="sh">Lịch sử dự đoán thực tế</div>',
+            '<div class="sh">Lịch sử Phân tích</div>',
             unsafe_allow_html=True,
         )
         render_history()
 
-    elif page == "Phân tích hàng loạt":
+    elif page == "Phân tích Hàng loạt":
         render_batch(
             mlp_model,
             vectorizer,
             predict_batch,
         )
 
-    elif page == "Trực quan dữ liệu":
+    elif page == "Trực quan hóa Dữ liệu":
         render_visualization(
             raw_df,
             clean_df,
         )
 
-    elif page == "Hiệu suất mô hình":
+    elif page == "Hiệu suất Mô hình":
         render_performance(metrics)
 
-    elif page == "Thông tin dữ liệu":
+    elif page == "Thông tin Dữ liệu":
         render_data_info(
             raw_df,
             clean_df,
         )
 
     st.markdown(
-        '<div class="ft">Project &nbsp;·&nbsp; '
-        '<strong>ReviewClassifyAI</strong></div>',
+        '<div class="ft">ReviewClassifyAI Platform &nbsp;·&nbsp; '
+        '<strong>Sentiment Agent</strong></div>',
         unsafe_allow_html=True,
     )
 

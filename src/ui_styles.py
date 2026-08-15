@@ -1,17 +1,20 @@
 import streamlit as st
 
+# Tập từ dừng tiếng Anh
 STOP = {"the","a","an","and","or","but","in","on","at","to","for","of","is","it","this","that","was","are","be","with","as","by","from","they","we","i","my","your","me","he","she","his","her","its","our","have","had","has","do","did","not","so","if","up","all","also","will","just","can","more","been","than","then","there","their","out","would","could","what","which","who","how","no","one","about","when","into","very","too","am","were","being"}
 
+# Danh mục trang điều hướng
 NAV_PAGES = {
     "Tổng quan": ("overview", "layout-dashboard"),
-    "Phân tích đơn lẻ": ("single", "mouse-pointer-click"),
-    "Phân tích hàng loạt": ("batch", "layers"),
-    "Trực quan dữ liệu": ("viz", "bar-chart-2"),
-    "Hiệu suất mô hình": ("performance", "activity"),
-    "Thông tin dữ liệu": ("info", "file-text"),
+    "Phân tích Trực tiếp": ("single", "mouse-pointer-click"),
+    "Phân tích Hàng loạt": ("batch", "layers"),
+    "Trực quan hóa Dữ liệu": ("viz", "bar-chart-2"),
+    "Hiệu suất Mô hình": ("performance", "activity"),
+    "Thông tin Dữ liệu": ("info", "file-text"),
 }
 
 def T():
+    # Bảng màu giao diện tối cố định
     return dict(
         bg="#0F172A", surface="#1E293B", surface2="#263348",
         border="#334155", text="#F1F5F9", muted="#94A3B8",
@@ -22,6 +25,7 @@ def T():
     )
 
 def get_icon(name, size=16, color="currentColor"):
+    # Trả về biểu tượng dạng SVG
     icons = {
         "layout-dashboard": '<rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/>',
         "mouse-pointer-click": '<path d="M14 4.1 12 6"/><path d="m5.1 8-2.9-.8"/><path d="m6 12-1.9 2"/><path d="M7.2 2.2 8 5.1"/><path d="M9.037 9.69a.498.498 0 0 1 .653-.653l11 4.5a.5.5 0 0 1-.074.949l-4.349 1.041a1 1 0 0 0-.74.739l-1.04 4.35a.5.5 0 0 1-.95.074z"/>',
@@ -31,7 +35,7 @@ def get_icon(name, size=16, color="currentColor"):
         "database": '<ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5V19A9 3 0 0 0 21 19V5"/><path d="M3 12A9 3 0 0 0 21 12"/>',
         "check-circle": '<path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/>',
         "x-circle": '<circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/>',
-        "brain": '<path d="M9.5 2A2.5 2.5 0 0 1 12 4.5v15a2.5 2.5 0 0 1-4.96.44 2.5 2.5 0 0 1-2.96-3.08 3 3 0 0 1-.34-5.58 2.5 2.5 0 0 1 1.32-4.24 2.5 2.5 0 0 1 1.98-3A2.5 2.5 0 0 1 9.5 2Z"/><path d="M14.5 2A2.5 2.5 0 0 0 12 4.5v15a2.5 2.5 0 0 0 4.96.44 2.5 2.5 0 0 0 2.96-3.08 3 3 0 0 0 .34-5.58 2.5 2.5 0 0 0-1.32-4.24 2.5 2.5 0 0 0-1.98-3A2.5 2.5 0 0 0 14.5 2Z"/>',
+        "brain": '<path d="M9.5 2A2.5 2.5 0 0 1 12 4.5v15a2.5 2.5 0 0 1-4.96.44 2.5 2.5 0 0 1-2.96-3.08 3 3 0 0 1-.34-5.58 2.5 2.5 0 0 1 1.32-4.24 2.5 2.5 0 0 1 1.98-3A2.5 2.5 0 0 1 9.5 2Z"/><path d="M14.5 2A2.5 2.5 0 0 0 12 4.5v15a2.5 2.5 0 0 0 4.96.44 2.5 2.5 0 0 0 2.96-3.08 3 3 0 0 0-.34-5.58 2.5 2.5 0 0 0-1.32-4.24 2.5 2.5 0 0 0-1.98-3A2.5 2.5 0 0 0 14.5 2Z"/>',
         "cpu": '<rect width="16" height="16" x="4" y="4" rx="2"/><rect width="6" height="6" x="9" y="9" rx="1"/><path d="M15 2v2"/><path d="M15 20v2"/><path d="M2 15h2"/><path d="M2 9h2"/><path d="M20 15h2"/><path d="M20 9h2"/><path d="M9 2v2"/><path d="M9 20v2"/>',
         "zap": '<polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>',
         "file-text": '<path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M10 9H8"/><path d="M16 13H8"/><path d="M16 17H8"/>',
@@ -40,11 +44,13 @@ def get_icon(name, size=16, color="currentColor"):
     return f'<svg xmlns="http://www.w3.org/2000/svg" width="{size}" height="{size}" viewBox="0 0 24 24" fill="none" stroke="{color}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block; vertical-align:middle; flex-shrink:0;">{path}</svg>'
 
 def get_icon_data_uri(name, size=18, color="%236B7280"):
+    # Chuyển SVG sang dạng Data URI
     raw_svg = get_icon(name, size, color="COLORPLACEHOLDER")
     svg = raw_svg.replace("COLORPLACEHOLDER", color).replace("#", "%23").replace('"', "'")
     return f"data:image/svg+xml,{svg}"
 
 def inject_css():
+    # Chèn CSS tùy chỉnh giao diện
     t = T()
     st.markdown(f"""
     <style>

@@ -7,6 +7,7 @@ import matplotlib.pyplot as plt
 from collections import Counter
 from src.ui_styles import T, STOP
 
+# Thiết lập cấu hình đồ họa
 plt.rcParams.update({
     "font.family": "sans-serif",
     "font.sans-serif": ["JetBrains Mono", "Inter", "Arial", "DejaVu Sans"],
@@ -21,9 +22,7 @@ plt.rcParams.update({
 })
 
 def _apply_academic_style(ax, show_grid=True):
-    """
-    Áp dụng khung cấu trúc đồ họa khoa học tối giản cho nền tối.
-    """
+    # Áp dụng phong cách tối giản
     ax.set_facecolor("none")
     if show_grid:
         ax.grid(True, linestyle="--", alpha=0.4, zorder=0)
@@ -34,25 +33,26 @@ def _apply_academic_style(ax, show_grid=True):
     ax.tick_params(labelsize=9)
 
 def chart_distribution(df, label_col):
+    # Biểu đồ phân bố nhãn
     if not label_col or df is None or df.empty: 
         return None
         
     vc = df[label_col].value_counts()
-    norm = lambda x: "Negative Sentiment" if str(x).lower() in ("0", "negative", "neg") else "Positive Sentiment"
+    norm = lambda x: "Đánh giá Tiêu cực" if str(x).lower() in ("0", "negative", "neg") else "Đánh giá Tích cực"
     labels = [norm(l) for l in vc.index]
     
-    colors = ["#FDA4AF" if "Negative" in l else "#A7F3D0" for l in labels]
-    edge_colors = ["#E11D48" if "Negative" in l else "#059669" for l in labels]
+    colors = ["#FDA4AF" if "Tiêu cực" in l else "#A7F3D0" for l in labels]
+    edge_colors = ["#E11D48" if "Tiêu cực" in l else "#059669" for l in labels]
     
     fig, ax = plt.subplots(figsize=(6, 4.2))
     bars = ax.bar(labels, vc.values, color=colors, edgecolor=edge_colors, linewidth=1.2, width=0.38, zorder=3)
     
     _apply_academic_style(ax, show_grid=True)
-    ax.set_ylabel("Số lượng mẫu dữ liệu", fontsize=10, weight="bold")
+    ax.set_ylabel("Số lượng đánh giá", fontsize=10, weight="bold")
     
     for bar in bars:
         height = bar.get_height()
-        ax.annotate(f"{height:,} reviews",
+        ax.annotate(f"{height:,} mẫu",
                     xy=(bar.get_x() + bar.get_width() / 2, height),
                     xytext=(0, 4),  
                     textcoords="offset points",
@@ -63,6 +63,7 @@ def chart_distribution(df, label_col):
     return fig
 
 def chart_word_freq(df, text_col):
+    # Biểu đồ tần suất từ
     if not text_col or df is None or df.empty: 
         return None
         
@@ -80,7 +81,7 @@ def chart_word_freq(df, text_col):
     bars = ax.barh(lbls, vals, color="#3B82F6", edgecolor="#60A5FA", linewidth=1, height=0.55, zorder=3)
     
     _apply_academic_style(ax, show_grid=True)
-    ax.set_xlabel("Tần suất xuất hiện (Counts)", fontsize=10, weight="bold")
+    ax.set_xlabel("Tần suất xuất hiện", fontsize=10, weight="bold")
     
     for bar in bars:
         width = bar.get_width()
@@ -95,6 +96,7 @@ def chart_word_freq(df, text_col):
     return fig
 
 def chart_conf_hist(history):
+    # Biểu đồ phân bố tin cậy
     if not history: 
         return None
         
@@ -106,8 +108,8 @@ def chart_conf_hist(history):
             ax.hist(confs, bins=12, alpha=0.8, color=clr, edgecolor=edge_clr, linewidth=0.8, label=lbl, zorder=3)
             
     _apply_academic_style(ax, show_grid=True)
-    ax.set_xlabel("Mức độ tin cậy toán học (Confidence)", fontsize=10)
-    ax.set_ylabel("Số lượng mẫu phát sinh", fontsize=10)
+    ax.set_xlabel("Độ tin cậy (Confidence)", fontsize=10)
+    ax.set_ylabel("Số lượng đánh giá", fontsize=10)
     legend = ax.legend(frameon=True, facecolor="#1E293B", edgecolor="#334155", fontsize=9, loc="upper left")
     for text in legend.get_texts():
         text.set_color("#F1F5F9")
@@ -117,6 +119,7 @@ def chart_conf_hist(history):
     return fig
 
 def chart_trend(history):
+    # Biểu đồ xu hướng tích lũy
     if len(history) < 2: 
         return None
         
@@ -129,12 +132,12 @@ def chart_trend(history):
     x = list(range(1, len(history) + 1))
     
     fig, ax = plt.subplots(figsize=(6, 3.8))
-    ax.plot(x, pr, label="Positive Accumulation", color="#10B981", linewidth=2.2, marker='o', markersize=4, zorder=3)
-    ax.plot(x, nr, label="Negative Accumulation", color="#F43F5E", linewidth=2.2, marker='s', markersize=4, zorder=3)
+    ax.plot(x, pr, label="Tích cực tích lũy", color="#10B981", linewidth=2.2, marker='o', markersize=4, zorder=3)
+    ax.plot(x, nr, label="Tiêu cực tích lũy", color="#F43F5E", linewidth=2.2, marker='s', markersize=4, zorder=3)
     
     _apply_academic_style(ax, show_grid=True)
-    ax.set_xlabel("Thứ tự lượt dự đoán (Sequence Steps)", fontsize=10)
-    ax.set_ylabel("Giá trị tích lũy hình học", fontsize=10)
+    ax.set_xlabel("Lượt phân tích", fontsize=10)
+    ax.set_ylabel("Số lượng tích lũy", fontsize=10)
     legend = ax.legend(frameon=True, facecolor="#1E293B", edgecolor="#334155", fontsize=9, loc="upper left")
     for text in legend.get_texts():
         text.set_color("#F1F5F9")
@@ -144,6 +147,7 @@ def chart_trend(history):
     return fig
 
 def chart_confusion(cm):
+    # Vẽ ma trận nhầm lẫn
     z = np.array(cm)
     x_labels = ["Dự đoán Tiêu cực", "Dự đoán Tích cực"]
     y_labels = ["Thực tế Tiêu cực",  "Thực tế Tích cực"]
@@ -179,6 +183,7 @@ def chart_confusion(cm):
     return fig
 
 def chart_wordcloud(df, text_col):
+    # Tạo đám mây từ vựng
     try: 
         from wordcloud import WordCloud
     except ImportError: 
@@ -207,6 +212,7 @@ def chart_wordcloud(df, text_col):
     return fig
 
 def chart_batch_pie(df_out):
+    # Biểu đồ tròn phân bố
     if "Dự đoán" not in df_out.columns or df_out.empty:
         return None
         
@@ -227,7 +233,7 @@ def chart_batch_pie(df_out):
     for autotext in autotexts:
         autotext.set_fontsize(10)
         
-    ax.text(0, 0, f"TOTAL\n{total_samples:,}", ha="center", va="center", fontsize=11, weight="bold", color="#94A3B8")
+    ax.text(0, 0, f"TỔNG SỐ\n{total_samples:,}", ha="center", va="center", fontsize=11, weight="bold", color="#94A3B8")
     
     ax.axis("equal")
     fig.patch.set_facecolor("none")
@@ -235,6 +241,7 @@ def chart_batch_pie(df_out):
     return fig
 
 def chart_batch_hist(df_out):
+    # Biểu đồ tần suất tin cậy
     if "Độ tin cậy" not in df_out.columns or "Dự đoán" not in df_out.columns or df_out.empty:
         return None
         
@@ -246,8 +253,8 @@ def chart_batch_hist(df_out):
             ax.hist(subset, bins=20, alpha=0.82, color=clr, edgecolor=b_clr, linewidth=0.8, label=f"{lbl} Confidence", zorder=3)
             
     _apply_academic_style(ax, show_grid=True)
-    ax.set_xlabel("Mức độ tự tin toán học đầu ra (Confidence Score)", fontsize=10)
-    ax.set_ylabel("Mật độ tần suất phân bổ mẫu", fontsize=10)
+    ax.set_xlabel("Mức độ tự tin (Confidence Score)", fontsize=10)
+    ax.set_ylabel("Tần suất mẫu", fontsize=10)
     legend = ax.legend(frameon=True, facecolor="#1E293B", edgecolor="#334155", fontsize=9)
     for text in legend.get_texts():
         text.set_color("#F1F5F9")
@@ -257,6 +264,7 @@ def chart_batch_hist(df_out):
     return fig
 
 def chart_learning_curve(lc_path="models/learning_curve.json"):
+    # Biểu đồ tiến trình hội tụ
     if not os.path.exists(lc_path): 
         return None
     try:
@@ -275,15 +283,15 @@ def chart_learning_curve(lc_path="models/learning_curve.json"):
         ax.plot(iterations, loss_values, color="#818CF8", linewidth=2.5, zorder=3, label="Loss Value")
         
         ax.scatter(iterations[-1], loss_values[-1], color="#EF4444", s=50, edgecolors="white", linewidths=1.5, zorder=4, label="Convergence")
-        ax.annotate(f" Convergence\n (Epoch {iterations[-1]})",
+        ax.annotate(f" Hội tụ\n (Epoch {iterations[-1]})",
                     xy=(iterations[-1], loss_values[-1]),
                     xytext=(12, 12), textcoords="offset points",
                     color="#FCA5A5", weight="bold", fontsize=9,
                     arrowprops=dict(arrowstyle="->", color="#EF4444", lw=0.8))
                     
         _apply_academic_style(ax, show_grid=True)
-        ax.set_xlabel("Số lượng kỷ nguyên huấn luyện (Epochs)", fontsize=10)
-        ax.set_ylabel("Sai số hàm mất mát (Loss Value)", fontsize=10)
+        ax.set_xlabel("Kỷ nguyên huấn luyện (Epochs)", fontsize=10)
+        ax.set_ylabel("Độ hao hụt (Loss Value)", fontsize=10)
         
         fig.patch.set_facecolor("none")
         fig.tight_layout()
