@@ -29,7 +29,7 @@ GLOBAL_CLEANER = TextCleaner()
 
 st.set_page_config(page_title="ReviewClassifyAI", layout="wide", initial_sidebar_state="expanded")
 
-defaults = {"dark_mode": False, "history": [], "active_page": "Tổng quan", "batch_results": None}
+defaults = {"dark_mode": True, "history": [], "active_page": "Tổng quan", "batch_results": None}
 for k, v in defaults.items():
     if k not in st.session_state: 
         st.session_state[k] = v

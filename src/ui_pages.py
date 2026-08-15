@@ -41,13 +41,6 @@ def render_sidebar():
         st.markdown(f'<style>{"".join(icon_rules)} section[data-testid="stSidebar"] div[data-testid="stButton"]:has(button#nav_{active_slug}) > button {{ background: linear-gradient(135deg, #2563EB 0%, #4F46E5 100%) !important; color: #FFFFFF !important; font-weight: 700 !important; box-shadow: 0 4px 10px rgba(37,99,235,0.3) !important; }}</style>', unsafe_allow_html=True)
         
         st.markdown(f'<div style="height:1px;background:{t["border"]};margin:1.2rem 0;"></div>', unsafe_allow_html=True)
-        st.markdown('<div class="nav-section-label">TÙY CHỈNH</div>', unsafe_allow_html=True)
-        dark = st.toggle("Chế độ tối", value=st.session_state.dark_mode, key="tgl_dark")
-        if dark != st.session_state.dark_mode:
-            st.session_state.dark_mode = dark
-            st.rerun()
-
-        st.markdown(f'<div style="height:1px;background:{t["border"]};margin:1.2rem 0;"></div>', unsafe_allow_html=True)
         st.markdown('<div class="nav-section-label">PHIÊN LÀM VIỆC</div>', unsafe_allow_html=True)
         h = st.session_state.history
         total = len(h)
@@ -103,11 +96,11 @@ def render_single_analysis(model, vectorizer, predict_func):
                         st.markdown(f'<div class="card" style="margin-top:.8rem; padding: 1rem;"><div class="card-lbl">Độ trễ suy luận</div><div class="card-val">{lat:.4f}s</div></div>', unsafe_allow_html=True)
                     
                     if contributions:
-                        st.markdown('<br><div style="font-size:0.8rem; font-weight:700; color:#475569; letter-spacing:0.5px;">CƠ SỞ TOÁN HỌC DỰA TRÊN TỪ KHÓA ĐÓNG GÓP:</div>', unsafe_allow_html=True)
+                        st.markdown('<br><div style="font-size:0.8rem; font-weight:700; color:#94A3B8; letter-spacing:0.5px;">CƠ SỞ TOÁN HỌC DỰA TRÊN TỪ KHÓA ĐÓNG GÓP:</div>', unsafe_allow_html=True)
                         for item in contributions:
                             w_word = item["word"]
                             w_coef = item["weight"]
-                            w_color = "#16A34A" if w_coef > 0 else "#DC2626"
+                            w_color = "#4ADE80" if w_coef > 0 else "#FCA5A5"
                             w_dir = "Tích cực" if w_coef > 0 else "Tiêu cực"
                             st.markdown(f'<div style="font-size:0.85rem; margin-bottom:0.2rem; color:{T()["text"]};">• Từ <strong>"{w_word}"</strong>: tác động <span style="color:{w_color}; font-weight:700;">{w_coef:+.2f}</span> về hướng {w_dir}</div>', unsafe_allow_html=True)
         else: 

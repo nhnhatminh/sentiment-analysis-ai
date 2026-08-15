@@ -12,22 +12,13 @@ NAV_PAGES = {
 }
 
 def T():
-    if st.session_state.dark_mode:
-        return dict(
-            bg="#0F172A", surface="#1E293B", surface2="#263348",
-            border="#334155", text="#F1F5F9", muted="#94A3B8",
-            primary="#3B82F6", secondary="#6366F1",
-            success="#22C55E", danger="#EF4444",
-            shadow="0 4px 24px rgba(0,0,0,.45)",
-            nav_bg="#1E293B", nav_hover="rgba(59,130,246,.15)",
-        )
     return dict(
-        bg="#F0F4F8", surface="#FFFFFF", surface2="#F8FAFC",
-        border="#E2E8F0", text="#1E293B", muted="#64748B",
-        primary="#2563EB", secondary="#4F46E5",
+        bg="#0F172A", surface="#1E293B", surface2="#263348",
+        border="#334155", text="#F1F5F9", muted="#94A3B8",
+        primary="#3B82F6", secondary="#6366F1",
         success="#22C55E", danger="#EF4444",
-        shadow="0 2px 12px rgba(0,0,0,.06)",
-        nav_bg="#FFFFFF", nav_hover="rgba(37,99,235,.08)",
+        shadow="0 4px 24px rgba(0,0,0,.45)",
+        nav_bg="#1E293B", nav_hover="rgba(59,130,246,.15)",
     )
 
 def get_icon(name, size=16, color="currentColor"):
@@ -75,8 +66,8 @@ def inject_css():
     section[data-testid="stSidebar"] div[data-testid="stButton"] {{ margin-bottom: .2rem !important; }}
     section[data-testid="stSidebar"] div[data-testid="stButton"] > button {{ display: flex !important; align-items: center !important; justify-content: flex-start !important; padding: .5rem 1rem .5rem 2.6rem !important; border-radius: 10px !important; cursor: pointer !important; transition: all .2s ease !important; font-size: .85rem !important; font-weight: 500 !important; color: {t['text']} !important; background-color: transparent !important; background-repeat: no-repeat !important; background-position: .8rem center !important; background-size: 16px 16px !important; border: 1px solid transparent !important; box-shadow: none !important; width: 100% !important; text-align: left !important; height: auto !important; }}
     section[data-testid="stSidebar"] div[data-testid="stButton"] > button:hover {{ background-color: {t['nav_hover']} !important; color: {t['primary']} !important; }}
-    .ib {{ background: #EFF6FF; border: 1px solid #BFDBFE; border-left: 4px solid #2563EB; border-radius: 10px; padding: .8rem 1rem; font-size: .85rem; color: #1E40AF; margin-bottom: 1rem; }}
-    .wb {{ background: #FFFBEB; border: 1px solid #FDE68A; border-left: 4px solid #F59E0B; border-radius: 10px; padding: .8rem 1rem; font-size: .85rem; color: #92400E; margin-bottom: 1rem; }}
+    .ib {{ background: rgba(59,130,246,.15); border: 1px solid #3B82F6; border-left: 4px solid #3B82F6; border-radius: 10px; padding: .8rem 1rem; font-size: .85rem; color: #93C5FD; margin-bottom: 1rem; }}
+    .wb {{ background: rgba(245,158,11,.15); border: 1px solid #F59E0B; border-left: 4px solid #F59E0B; border-radius: 10px; padding: .8rem 1rem; font-size: .85rem; color: #FDE68A; margin-bottom: 1rem; }}
     .sh {{ font-size: .85rem; font-weight: 700; color: {t['text']}; text-transform: uppercase; letter-spacing: 1.1px; margin: 0 0 1rem; padding-bottom: .5rem; border-bottom: 2px solid {t['border']}; }}
     .card {{ background: {t['surface']}; border-radius: 14px; padding: 1.25rem 1.3rem; box-shadow: {t['shadow']}; border: 1px solid {t['border']}; transition: transform .25s, box-shadow .25s; height: 100%; }}
     .card:hover {{ transform: translateY(-3px); box-shadow: 0 10px 28px rgba(37,99,235,.11); }}
@@ -87,13 +78,13 @@ def inject_css():
     .mc-name {{ font-size: .65rem; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; color: {t['muted']}; margin-bottom: .5rem; }}
     .mc-val  {{ font-size: 1.9rem; font-weight: 800; background: linear-gradient(135deg,#2563EB,#4F46E5); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; line-height: 1; }}
     .res {{ border-radius: 14px; padding: 1.5rem 1.6rem; border: 1.5px solid transparent; }}
-    .res.pos   {{ background: linear-gradient(135deg,#F0FDF4,#DCFCE7); border-color: #86EFAC; box-shadow: 0 4px 18px rgba(34,197,94,.13); }}
-    .res.neg   {{ background: linear-gradient(135deg,#FFF5F5,#FEE2E2); border-color: #FCA5A5; box-shadow: 0 4px 18px rgba(239,68,68,.13); }}
+    .res.pos   {{ background: linear-gradient(135deg,rgba(34,197,94,.15),rgba(22,163,74,.25)); border-color: #22C55E; box-shadow: 0 4px 18px rgba(34,197,94,.13); }}
+    .res.neg   {{ background: linear-gradient(135deg,rgba(239,68,68,.15),rgba(185,28,28,.25)); border-color: #EF4444; box-shadow: 0 4px 18px rgba(239,68,68,.13); }}
     .res-lbl   {{ font-size: .65rem; font-weight: 600; letter-spacing: 1.1px; text-transform: uppercase; margin-bottom: .4rem; display: flex; align-items: center; gap: 5px; }}
-    .res-lbl.pos {{ color: #16A34A; }} .res-lbl.neg {{ color: #DC2626; }}
+    .res-lbl.pos {{ color: #4ADE80; }} .res-lbl.neg {{ color: #FCA5A5; }}
     .res-val   {{ font-size: 1.5rem; font-weight: 800; line-height: 1.1; }}
-    .res-val.pos {{ color: #15803D; }} .res-val.neg {{ color: #B91C1C; }}
-    .conf-wrap {{ margin-top: 1rem; background: rgba(0,0,0,.08); border-radius: 99px; height: 6px; overflow: hidden; }}
+    .res-val.pos {{ color: #22C55E; }} .res-val.neg {{ color: #EF4444; }}
+    .conf-wrap {{ margin-top: 1rem; background: rgba(255,255,255,.1); border-radius: 99px; height: 6px; overflow: hidden; }}
     .conf-fill {{ height: 100%; border-radius: 99px; transition: width .6s ease; }}
     .conf-fill.pos {{ background: linear-gradient(90deg,#22C55E,#16A34A); }}
     .conf-fill.neg {{ background: linear-gradient(90deg,#EF4444,#B91C1C); }}
@@ -103,8 +94,8 @@ def inject_css():
     table.ht tbody tr {{ border-bottom: 1px solid {t['border']}; transition: background .12s; }}
     table.ht tbody tr:hover {{ background: {t['surface2']}; }}
     table.ht tbody td {{ padding: .7rem .4rem; color: {t['text']}; vertical-align: middle; }}
-    .bp {{ background:#DCFCE7; color:#15803D; border-radius:6px; padding:3px 10px; font-size:.75rem; font-weight:600; display: inline-flex; align-items: center; gap: 4px; }}
-    .bn {{ background:#FEE2E2; color:#B91C1C; border-radius:6px; padding:3px 10px; font-size:.75rem; font-weight:600; display: inline-flex; align-items: center; gap: 4px; }}
+    .bp {{ background:rgba(34,197,94,.2); color:#4ADE80; border-radius:6px; padding:3px 10px; font-size:.75rem; font-weight:600; display: inline-flex; align-items: center; gap: 4px; }}
+    .bn {{ background:rgba(239,68,68,.2); color:#FCA5A5; border-radius:6px; padding:3px 10px; font-size:.75rem; font-weight:600; display: inline-flex; align-items: center; gap: 4px; }}
     .sb {{ display: flex; gap: 1rem; flex-wrap: wrap; background: {t['surface2']}; border-radius: 12px; padding: 1rem 1.4rem; border: 1px solid {t['border']}; margin-bottom: 1.2rem; }}
     .si {{ flex: 1; min-width: 90px; }}
     .sl {{ font-size: .65rem; text-transform: uppercase; letter-spacing: .9px; color: {t['muted']}; font-weight: 600; margin-bottom: .25rem; display: flex; align-items: center; gap: 4px; }}
